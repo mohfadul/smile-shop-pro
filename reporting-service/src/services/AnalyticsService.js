@@ -1,3 +1,4 @@
+// FREE ALTERNATIVE: Using Supabase + PostgreSQL for analytics (replaces paid analytics tools)
 const { pool } = require('../models/reportingModel');
 const winston = require('winston');
 

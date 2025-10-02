@@ -39,9 +39,9 @@ class GoogleDriveService {
         return;
       }
 
-      // Production configuration with Google Drive API
+      // FREE ALTERNATIVE: Google Drive API with Service Account (FREE - 15GB storage)
       if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-        // Service Account authentication (recommended for server-to-server)
+        // Service Account authentication (FREE - recommended for server-to-server)
         const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
         
         this.auth = new google.auth.GoogleAuth({
@@ -57,13 +57,14 @@ class GoogleDriveService {
         // Set up root folder for dental store files
         this.rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || await this.createRootFolder();
         
-        logger.info('📁 Google Drive service initialized with Service Account');
+        logger.info('📁 Google Drive service initialized with Service Account (FREE - 15GB)');
         logger.info(`📁 Root folder ID: ${this.rootFolderId}`);
+        logger.info('📁 FREE tier includes: 15GB storage, API access, file sharing');
         this.isConfigured = true;
         return;
       }
 
-      // OAuth2 authentication (for user-based access)
+      // FREE ALTERNATIVE: OAuth2 authentication (FREE - user-based access)
       if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN) {
         const oauth2Client = new google.auth.OAuth2(
           process.env.GOOGLE_CLIENT_ID,
@@ -80,7 +81,8 @@ class GoogleDriveService {
         
         this.rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || await this.createRootFolder();
         
-        logger.info('📁 Google Drive service initialized with OAuth2');
+        logger.info('📁 Google Drive service initialized with OAuth2 (FREE - 15GB)');
+        logger.info('📁 Using personal Google account storage (FREE tier)');
         this.isConfigured = true;
         return;
       }

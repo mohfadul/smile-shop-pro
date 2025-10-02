@@ -1,6 +1,7 @@
 const { pool } = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const catchAsync = require('../utils/catchAsync');
 
 // Security utility functions
@@ -18,6 +19,42 @@ const incrementLoginAttempts = async (userId) => {
 
 const resetLoginAttempts = async (userId) => {
   await pool.query('SELECT reset_login_attempts($1)', [userId]);
+};
+
+// Generate JWT token
+const generateToken = (user) => {
+  return jwt.sign(
+    { 
+      user_id: user.user_id, 
+      email: user.email, 
+      role: user.role 
+    },
+    process.env.JWT_SECRET,
+    { 
+      expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+      issuer: 'auth-service',
+      audience: 'dental-store'
+    }
+  );
+};
+
+// Set HttpOnly cookie
+const setAuthCookie = (res, token) => {
+  res.cookie('auth_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  });
+};
+
+// Clear auth cookie
+const clearAuthCookie = (res) => {
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  });
 };
 
 const register = catchAsync(async (req, res) => {

@@ -1,0 +1,21 @@
+{
+  "name": "@dental-store/supabase-storage",
+  "version": "1.0.0",
+  "description": "Shared Supabase storage functionality for dental store microservices",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "multer": "^1.4.5-lts.1"
+  },
+  "keywords": [
+    "supabase",
+    "storage",
+    "file-upload",
+    "dental-store"
+  ],
+  "author": "Dental Store Team",
+  "license": "MIT"
+}

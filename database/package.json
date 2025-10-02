@@ -1,0 +1,48 @@
+{
+  "name": "dental-store-database-migrations",
+  "version": "1.0.0",
+  "description": "Database migration scripts for Dental Store Sudan microservices platform",
+  "main": "supabase-migration-runner.js",
+  "scripts": {
+    "migrate": "node supabase-migration-runner.js",
+    "migrate:auth": "node -e \"require('./supabase-migration-runner.js').runSingle('001_auth_service_schema.sql')\"",
+    "migrate:products": "node -e \"require('./supabase-migration-runner.js').runSingle('002_product_service_schema.sql')\"",
+    "migrate:orders": "node -e \"require('./supabase-migration-runner.js').runSingle('003_order_service_schema.sql')\"",
+    "migrate:payments": "node -e \"require('./supabase-migration-runner.js').runSingle('004_payment_service_schema.sql')\"",
+    "migrate:shipments": "node -e \"require('./supabase-migration-runner.js').runSingle('005_shipment_service_schema.sql')\"",
+    "migrate:notifications": "node -e \"require('./supabase-migration-runner.js').runSingle('006_notification_service_schema.sql')\"",
+    "migrate:reporting": "node -e \"require('./supabase-migration-runner.js').runSingle('007_reporting_service_schema.sql')\"",
+    "verify": "node -e \"require('./supabase-migration-runner.js').verify()\"",
+    "reset": "node -e \"require('./supabase-migration-runner.js').reset()\"",
+    "status": "node -e \"require('./supabase-migration-runner.js').status()\""
+  },
+  "keywords": [
+    "dental-store",
+    "database",
+    "migrations",
+    "supabase",
+    "postgresql",
+    "microservices",
+    "sudan"
+  ],
+  "author": "Dental Store Sudan Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mohfadul/smile-shop-pro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mohfadul/smile-shop-pro/issues"
+  },
+  "homepage": "https://github.com/mohfadul/smile-shop-pro#readme"
+}

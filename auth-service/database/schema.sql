@@ -261,3 +261,26 @@ VALUES (
     'active',
     true
 ) ON CONFLICT (email) DO NOTHING;
+
+-- Professional Verification Table
+CREATE TABLE IF NOT EXISTS professional_verifications (
+    verification_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    license_number VARCHAR(100) NOT NULL,
+    license_type VARCHAR(50) NOT NULL CHECK (license_type IN ('dentist', 'dental_technician', 'dental_hygienist', 'orthodontist', 'oral_surgeon')),
+    institution VARCHAR(200) NOT NULL,
+    graduation_year INTEGER NOT NULL,
+    documents JSONB DEFAULT '[]'::jsonb,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    reviewed_by UUID REFERENCES users(user_id),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for professional verifications
+CREATE INDEX IF NOT EXISTS idx_professional_verifications_user_id ON professional_verifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_professional_verifications_status ON professional_verifications(status);
+CREATE INDEX IF NOT EXISTS idx_professional_verifications_submitted_at ON professional_verifications(submitted_at);

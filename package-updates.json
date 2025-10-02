@@ -1,0 +1,68 @@
+{
+  "title": "Package.json Updates for Free Services",
+  "description": "Required dependencies for all free service alternatives",
+  "services": {
+    "notification-service": {
+      "new_dependencies": {
+        "nodemailer": "^6.9.7",
+        "twilio": "^4.19.0",
+        "googleapis": "^128.0.0"
+      },
+      "description": "Gmail SMTP, Twilio sandbox, Google APIs"
+    },
+    "external-integrations": {
+      "new_dependencies": {
+        "googleapis": "^128.0.0",
+        "pdfkit": "^0.13.0",
+        "blob-stream": "^0.1.3"
+      },
+      "description": "Google Drive API and PDFKit for PDF generation"
+    },
+    "reporting-service": {
+      "new_dependencies": {
+        "@supabase/supabase-js": "^2.38.4",
+        "exceljs": "^4.4.0"
+      },
+      "description": "Supabase client and Excel generation"
+    },
+    "shared/supabase-storage": {
+      "new_dependencies": {
+        "@supabase/supabase-js": "^2.38.4",
+        "multer": "^1.4.5-lts.1"
+      },
+      "description": "Supabase storage client"
+    },
+    "order-service": {
+      "new_dependencies": {
+        "@supabase/supabase-js": "^2.38.4",
+        "pdfkit": "^0.13.0",
+        "blob-stream": "^0.1.3"
+      },
+      "description": "Invoice PDF generation with Supabase storage"
+    },
+    "product-service": {
+      "new_dependencies": {
+        "@supabase/supabase-js": "^2.38.4",
+        "multer": "^1.4.5-lts.1"
+      },
+      "description": "Product image storage with Supabase"
+    }
+  },
+  "install_commands": [
+    "cd notification-service && npm install nodemailer twilio googleapis",
+    "cd external-integrations && npm install googleapis pdfkit blob-stream",
+    "cd reporting-service && npm install @supabase/supabase-js exceljs",
+    "cd shared/supabase-storage && npm install @supabase/supabase-js multer",
+    "cd order-service && npm install @supabase/supabase-js pdfkit blob-stream",
+    "cd product-service && npm install @supabase/supabase-js multer"
+  ],
+  "total_cost": "$0/month",
+  "replaced_services": [
+    "SendGrid/Mailgun → Gmail SMTP (FREE)",
+    "Twilio WhatsApp Business → Twilio Sandbox (FREE)",
+    "Premium SMS APIs → Email-to-SMS + Twilio Trial (FREE)",
+    "AWS S3/Google Cloud Storage → Google Drive API (FREE)",
+    "Paid PDF APIs → PDFKit Open Source (FREE)",
+    "Analytics Dashboards → Supabase + Chart.js (FREE)"
+  ]
+}

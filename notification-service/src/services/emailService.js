@@ -50,17 +50,17 @@ class EmailService {
         return;
       }
 
-      // Production configuration with SendGrid
-      if (process.env.SENDGRID_API_KEY) {
+      // FREE ALTERNATIVE: Gmail SMTP (Free tier - 500 emails/day)
+      if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
         this.transporter = nodemailer.createTransporter({
-          service: 'SendGrid',
+          service: 'gmail',
           auth: {
-            user: 'apikey',
-            pass: process.env.SENDGRID_API_KEY,
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD, // App-specific password
           },
         });
 
-        logger.info('📧 Email service initialized with SendGrid');
+        logger.info('📧 Email service initialized with Gmail SMTP (FREE)');
         this.isConfigured = true;
         return;
       }

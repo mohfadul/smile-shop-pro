@@ -36,14 +36,25 @@ class WhatsAppService {
         return;
       }
 
-      // Production configuration with Twilio WhatsApp Business API
+      // FREE ALTERNATIVE: Twilio Trial/Sandbox (FREE - limited but functional)
       if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
         this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-        this.fromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886'; // Twilio Sandbox number
+        // Use Twilio Sandbox number (FREE) - requires recipient to join sandbox first
+        this.fromNumber = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886'; // FREE Twilio Sandbox
         
-        logger.info('📱 WhatsApp service initialized with Twilio');
-        logger.info(`📱 From number: ${this.fromNumber}`);
+        logger.info('📱 WhatsApp service initialized with Twilio Sandbox (FREE)');
+        logger.info(`📱 From number: ${this.fromNumber} (Sandbox - recipients must join first)`);
+        logger.info('📱 To join sandbox, send "join <sandbox-keyword>" to the sandbox number');
         this.isConfigured = true;
+        return;
+      }
+
+      // FALLBACK: Manual WhatsApp messaging (for development/testing)
+      if (process.env.WHATSAPP_MANUAL_MODE === 'true') {
+        logger.info('📱 WhatsApp service initialized in MANUAL mode (FREE)');
+        logger.info('📱 Messages will be logged for manual sending via WhatsApp Web/App');
+        this.isConfigured = true;
+        this.manualMode = true;
         return;
       }
 
@@ -66,8 +77,27 @@ class WhatsAppService {
         return {
           success: true,
           message_id: `mock_wa_${Date.now()}`,
-          cost: 0.005,
+          cost: 0, // FREE
           to: formattedTo
+        };
+      }
+
+      // MANUAL MODE: Log message for manual sending (FREE alternative)
+      if (this.manualMode) {
+        logger.info('📱 MANUAL WHATSAPP MESSAGE (Copy and send manually):');
+        logger.info(`📱 TO: ${formattedTo.replace('whatsapp:', '')}`);
+        logger.info(`📱 MESSAGE: ${body}`);
+        if (attachments.length > 0) {
+          logger.info(`📱 ATTACHMENTS: ${JSON.stringify(attachments)}`);
+        }
+        logger.info('📱 ----------------------------------------');
+        
+        return {
+          success: true,
+          message_id: `manual_wa_${Date.now()}`,
+          cost: 0, // FREE - manual sending
+          to: formattedTo,
+          manual_mode: true
         };
       }
 
@@ -100,7 +130,7 @@ class WhatsAppService {
       return {
         success: true,
         message_id: message.sid,
-        cost: 0.005, // Approximate cost per WhatsApp message
+        cost: 0, // FREE with Twilio Sandbox (limited recipients)
         to: formattedTo,
         status: message.status
       };
