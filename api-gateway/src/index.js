@@ -45,7 +45,13 @@ app.use(helmet({
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = process.env.ALLOWED_ORIGINS ?
-      process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000', 'http://localhost:8080'];
+      process.env.ALLOWED_ORIGINS.split(',') : [
+        'http://localhost:3000', 
+        'http://localhost:8080', 
+        'http://localhost:8083',
+        'https://dqash.com',
+        'https://www.dqash.com'
+      ];
 
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -233,11 +239,84 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
   }
 });
 
-// Admin routes (role-based authorization)
+// Generic proxy middleware for microservices
+const proxyToService = (serviceUrlEnv, requireAuth = false, requiredRoles = []) => {
+  return async (req, res) => {
+    try {
+      const serviceUrl = process.env[serviceUrlEnv];
+      if (!serviceUrl) {
+        return res.status(503).json({ error: 'Service unavailable', message: `${serviceUrlEnv} not configured` });
+      }
+
+      const config = {
+        method: req.method,
+        url: `${serviceUrl}${req.originalUrl}`,
+        data: req.body,
+        params: req.query,
+        headers: {}
+      };
+
+      // Forward authorization header if present
+      if (req.headers.authorization) {
+        config.headers.Authorization = req.headers.authorization;
+      }
+
+      const response = await axios(config);
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      const status = error.response?.status || 500;
+      const data = error.response?.data || { error: 'Service error', message: error.message };
+      res.status(status).json(data);
+    }
+  };
+};
+
+// Auth Service Routes
+app.use('/api/auth', (req, res, next) => {
+  // Skip authentication for login/register endpoints
+  if (req.path === '/login' || req.path === '/register' || req.path === '/verify-token') {
+    return proxyToService('AUTH_SERVICE_URL')(req, res);
+  }
+  // Require authentication for other auth endpoints
+  authenticateToken(req, res, () => proxyToService('AUTH_SERVICE_URL')(req, res));
+});
+
+// Product Service Routes (mostly public)
+app.get('/api/products*', proxyToService('PRODUCT_SERVICE_URL'));
+app.post('/api/products*', authenticateToken, authorizeRoles('admin', 'manager'), proxyToService('PRODUCT_SERVICE_URL'));
+app.put('/api/products*', authenticateToken, authorizeRoles('admin', 'manager'), proxyToService('PRODUCT_SERVICE_URL'));
+app.delete('/api/products*', authenticateToken, authorizeRoles('admin', 'manager'), proxyToService('PRODUCT_SERVICE_URL'));
+
+// Categories (public)
+app.get('/api/categories*', proxyToService('PRODUCT_SERVICE_URL'));
+app.post('/api/categories*', authenticateToken, authorizeRoles('admin', 'manager'), proxyToService('PRODUCT_SERVICE_URL'));
+app.put('/api/categories*', authenticateToken, authorizeRoles('admin', 'manager'), proxyToService('PRODUCT_SERVICE_URL'));
+app.delete('/api/categories*', authenticateToken, authorizeRoles('admin', 'manager'), proxyToService('PRODUCT_SERVICE_URL'));
+
+// Order Service Routes (authenticated)
+app.use('/api/orders*', authenticateToken, proxyToService('ORDER_SERVICE_URL'));
+app.use('/api/cart*', authenticateToken, proxyToService('ORDER_SERVICE_URL'));
+
+// Payment Service Routes (authenticated)
+app.use('/api/payments*', authenticateToken, proxyToService('PAYMENT_SERVICE_URL'));
+app.get('/api/payment-methods', proxyToService('PAYMENT_SERVICE_URL')); // Public endpoint
+
+// Shipment Service Routes
+app.use('/api/shipments*', authenticateToken, proxyToService('SHIPMENT_SERVICE_URL'));
+app.get('/api/shipping-methods', proxyToService('SHIPMENT_SERVICE_URL')); // Public endpoint
+app.post('/api/shipping/calculate', proxyToService('SHIPMENT_SERVICE_URL')); // Public endpoint
+
+// Notification Service Routes (authenticated)
+app.use('/api/notifications*', authenticateToken, proxyToService('NOTIFICATION_SERVICE_URL'));
+
+// Reporting Service Routes (admin only)
+app.use('/api/reports*', authenticateToken, authorizeRoles('admin', 'manager'), proxyToService('REPORTING_SERVICE_URL'));
+
+// Admin Dashboard (aggregated data)
 app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('admin', 'manager'), async (req, res) => {
   try {
     // Aggregate data from multiple services for admin dashboard
-    const [products, orders, payments] = await Promise.all([
+    const [products, orders, payments] = await Promise.allSettled([
       axios.get(`${process.env.PRODUCT_SERVICE_URL}/api/products?limit=1000`),
       axios.get(`${process.env.ORDER_SERVICE_URL}/api/orders?limit=1000`, {
         headers: { Authorization: req.headers.authorization }
@@ -247,14 +326,18 @@ app.get('/api/admin/dashboard', authenticateToken, authorizeRoles('admin', 'mana
       })
     ]);
 
-    res.status(200).json({
-      products: products.data.products?.length || 0,
-      orders: orders.data.orders?.length || 0,
-      revenue: orders.data.orders?.filter(o => o.payment_status === 'paid').reduce((sum, o) => sum + o.total_amount, 0) || 0,
-      payments: payments.data.statistics
-    });
+    const dashboard = {
+      products: products.status === 'fulfilled' ? products.value.data.products?.length || 0 : 0,
+      orders: orders.status === 'fulfilled' ? orders.value.data.orders?.length || 0 : 0,
+      revenue: orders.status === 'fulfilled' ? 
+        orders.value.data.orders?.filter(o => o.payment_status === 'paid').reduce((sum, o) => sum + o.total_amount, 0) || 0 : 0,
+      payments: payments.status === 'fulfilled' ? payments.value.data.statistics : null,
+      timestamp: new Date().toISOString()
+    };
+
+    res.status(200).json({ success: true, data: dashboard });
   } catch (error) {
-    res.status(error.response?.status || 500).json(error.response?.data || { error: 'Dashboard data aggregation failed' });
+    res.status(500).json({ error: 'Dashboard data aggregation failed', message: error.message });
   }
 });
 

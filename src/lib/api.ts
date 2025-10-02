@@ -3,16 +3,26 @@
  * Connects frontend to backend microservices
  */
 
-// API Configuration
+// API Configuration - Use API Gateway for all requests
+const getApiBaseUrl = () => {
+  // Check if running on production domain
+  if (typeof window !== 'undefined' && window.location.hostname === 'dqash.com') {
+    return 'https://dqash.com/api';
+  }
+  // Development fallback
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+};
+
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  authService: import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:5000',
-  productService: import.meta.env.VITE_PRODUCT_SERVICE_URL || 'http://localhost:5001',
-  orderService: import.meta.env.VITE_ORDER_SERVICE_URL || 'http://localhost:5002',
-  paymentService: import.meta.env.VITE_PAYMENT_SERVICE_URL || 'http://localhost:5003',
-  shipmentService: import.meta.env.VITE_SHIPMENT_SERVICE_URL || 'http://localhost:5004',
-  notificationService: import.meta.env.VITE_NOTIFICATION_SERVICE_URL || 'http://localhost:5005',
-  reportingService: import.meta.env.VITE_REPORTING_SERVICE_URL || 'http://localhost:5006',
+  baseURL: getApiBaseUrl(),
+  // All services now go through API Gateway
+  authService: getApiBaseUrl(),
+  productService: getApiBaseUrl(),
+  orderService: getApiBaseUrl(),
+  paymentService: getApiBaseUrl(),
+  shipmentService: getApiBaseUrl(),
+  notificationService: getApiBaseUrl(),
+  reportingService: getApiBaseUrl(),
 };
 
 // HTTP Client with error handling
