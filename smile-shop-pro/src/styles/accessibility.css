@@ -1,0 +1,292 @@
+/* Accessibility Styles */
+
+/* High Contrast Mode */
+.high-contrast {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #1a1a1a;
+  --card-foreground: #ffffff;
+  --popover: #1a1a1a;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #333333;
+  --secondary-foreground: #ffffff;
+  --muted: #333333;
+  --muted-foreground: #cccccc;
+  --accent: #444444;
+  --accent-foreground: #ffffff;
+  --destructive: #ff0000;
+  --destructive-foreground: #ffffff;
+  --border: #666666;
+  --input: #333333;
+  --ring: #ffffff;
+}
+
+.high-contrast * {
+  border-color: #666666 !important;
+  outline-color: #ffffff !important;
+}
+
+.high-contrast button,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  border: 2px solid #666666 !important;
+}
+
+.high-contrast button:focus,
+.high-contrast input:focus,
+.high-contrast select:focus,
+.high-contrast textarea:focus,
+.high-contrast a:focus {
+  outline: 3px solid #ffffff !important;
+  outline-offset: 2px !important;
+}
+
+/* Font Size Variations */
+.font-small {
+  font-size: 14px;
+}
+
+.font-small h1 { font-size: 1.5rem; }
+.font-small h2 { font-size: 1.25rem; }
+.font-small h3 { font-size: 1.125rem; }
+.font-small .text-sm { font-size: 0.75rem; }
+.font-small .text-xs { font-size: 0.625rem; }
+
+.font-medium {
+  font-size: 16px;
+}
+
+.font-large {
+  font-size: 18px;
+}
+
+.font-large h1 { font-size: 2.5rem; }
+.font-large h2 { font-size: 2rem; }
+.font-large h3 { font-size: 1.75rem; }
+.font-large .text-sm { font-size: 1rem; }
+.font-large .text-xs { font-size: 0.875rem; }
+
+/* Reduced Motion */
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Focus Indicators */
+*:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+a:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Skip Links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #2563eb;
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Screen Reader Only Content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Keyboard Navigation */
+.keyboard-nav button:focus,
+.keyboard-nav input:focus,
+.keyboard-nav select:focus,
+.keyboard-nav textarea:focus,
+.keyboard-nav a:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5);
+}
+
+/* High Contrast Focus */
+.high-contrast *:focus {
+  outline: 3px solid #ffffff !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 1px #000000 !important;
+}
+
+/* Improved Button States */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Better Link Indicators */
+a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Form Labels */
+label {
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* Required Field Indicators */
+.required::after {
+  content: " *";
+  color: #ef4444;
+}
+
+/* Error States */
+.error {
+  border-color: #ef4444 !important;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+/* Success States */
+.success {
+  border-color: #10b981 !important;
+}
+
+.success-message {
+  color: #10b981;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+/* Loading States */
+.loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Reduced motion override for loading spinner */
+.reduced-motion .loading::after {
+  animation: none;
+  border: 2px solid #2563eb;
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  * {
+    background: white !important;
+    color: black !important;
+  }
+  
+  a::after {
+    content: " (" attr(href) ")";
+  }
+}
+
+/* Mobile Accessibility */
+@media (max-width: 768px) {
+  button,
+  input,
+  select,
+  textarea {
+    min-height: 44px; /* Minimum touch target size */
+    min-width: 44px;
+  }
+  
+  .font-large {
+    font-size: 20px;
+  }
+}
+
+/* Dark Mode Accessibility */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f0f0f;
+    --foreground: #f5f5f5;
+  }
+}
+
+/* Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Prefers High Contrast */
+@media (prefers-contrast: high) {
+  :root {
+    --border: #000000;
+    --ring: #000000;
+  }
+  
+  button,
+  input,
+  select,
+  textarea {
+    border: 2px solid #000000;
+  }
+}

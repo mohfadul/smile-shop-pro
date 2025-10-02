@@ -1,0 +1,842 @@
+openapi: 3.0.3
+info:
+  title: Dental Store Sudan API
+  description: |
+    Comprehensive API documentation for the Dental Store Sudan platform.
+    
+    ## Authentication
+    Most endpoints require JWT authentication via HttpOnly cookies.
+    
+    ## Rate Limiting
+    - General API: 100 requests per 15 minutes
+    - Authentication: 5 requests per 15 minutes
+    - File uploads: 10 requests per minute
+    
+    ## Error Handling
+    All errors follow a consistent format with appropriate HTTP status codes.
+    
+    ## Pagination
+    List endpoints support pagination with `limit` and `offset` parameters.
+  version: 1.0.0
+  contact:
+    name: Dental Store Sudan Support
+    email: support@dentalstore.sd
+    url: https://dentalstore.sd
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development API Gateway
+  - url: https://api.dentalstore.sd
+    description: Production API
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Products
+    description: Product catalog and inventory management
+  - name: Orders
+    description: Order management and processing
+  - name: Payments
+    description: Payment processing and verification
+  - name: Shipments
+    description: Shipping and delivery management
+  - name: Notifications
+    description: Multi-channel notification system
+  - name: Reports
+    description: Analytics and automated reporting
+  - name: Admin
+    description: Administrative functions
+
+paths:
+  # Authentication Endpoints
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: Create a new user account with email verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [first_name, last_name, email, password]
+              properties:
+                first_name:
+                  type: string
+                  example: "Ahmed"
+                last_name:
+                  type: string
+                  example: "Hassan"
+                email:
+                  type: string
+                  format: email
+                  example: "ahmed.hassan@example.com"
+                password:
+                  type: string
+                  minLength: 8
+                  example: "SecurePass123!"
+                role:
+                  type: string
+                  enum: [customer, professional]
+                  default: customer
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate user and set HttpOnly cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "ahmed.hassan@example.com"
+                password:
+                  type: string
+                  example: "SecurePass123!"
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: HttpOnly authentication cookie
+              schema:
+                type: string
+                example: "auth_token=jwt_token_here; HttpOnly; Secure; SameSite=Strict"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '423':
+          description: Account locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: User logout
+      description: Clear authentication cookie and invalidate session
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+
+  # Product Endpoints
+  /api/products:
+    get:
+      tags: [Products]
+      summary: Get products
+      description: Retrieve paginated list of products with filtering
+      parameters:
+        - name: category_id
+          in: query
+          description: Filter by category ID
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Search products by name or description
+          schema:
+            type: string
+        - name: min_price
+          in: query
+          description: Minimum price filter
+          schema:
+            type: number
+        - name: max_price
+          in: query
+          description: Maximum price filter
+          schema:
+            type: number
+        - name: in_stock
+          in: query
+          description: Filter by stock availability
+          schema:
+            type: boolean
+        - name: featured
+          in: query
+          description: Filter featured products
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          description: Number of products to return
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          description: Number of products to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      products:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+
+  /api/products/{id}:
+    get:
+      tags: [Products]
+      summary: Get product by ID
+      description: Retrieve detailed information about a specific product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ProductDetail'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Order Endpoints
+  /api/orders:
+    get:
+      tags: [Orders]
+      summary: Get user orders
+      description: Retrieve paginated list of user's orders
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by order status
+          schema:
+            type: string
+            enum: [pending, confirmed, processing, shipped, delivered, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      orders:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Order'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags: [Orders]
+      summary: Create new order
+      description: Create a new order with items and shipping information
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid order data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  # Admin Endpoints
+  /api/admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Get admin dashboard data
+      description: Retrieve aggregated data for admin dashboard
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Dashboard data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+        '403':
+          description: Access denied - Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/admin/exchange-rate:
+    get:
+      tags: [Admin]
+      summary: Get current exchange rates
+      description: Retrieve current USD to SDG exchange rates
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Exchange rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      usd_to_sdg:
+                        type: number
+                        example: 600.00
+                      sdg_to_usd:
+                        type: number
+                        example: 0.00167
+                      last_updated:
+                        type: string
+                        format: date-time
+                        example: "2024-01-15T10:30:00Z"
+
+    post:
+      tags: [Admin]
+      summary: Set exchange rate
+      description: Update USD to SDG exchange rate
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from_currency, to_currency, rate]
+              properties:
+                from_currency:
+                  type: string
+                  example: "USD"
+                to_currency:
+                  type: string
+                  example: "SDG"
+                rate:
+                  type: number
+                  example: 600.00
+      responses:
+        '201':
+          description: Exchange rate updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 123
+                      from_currency:
+                        type: string
+                        example: "USD"
+                      to_currency:
+                        type: string
+                        example: "SDG"
+                      rate:
+                        type: number
+                        example: 600.00
+                      effective_at:
+                        type: string
+                        format: date-time
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token
+      description: HttpOnly JWT authentication cookie
+
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 123
+        first_name:
+          type: string
+          example: "Ahmed"
+        last_name:
+          type: string
+          example: "Hassan"
+        email:
+          type: string
+          format: email
+          example: "ahmed.hassan@example.com"
+        role:
+          type: string
+          enum: [customer, professional, admin, manager, staff]
+          example: "customer"
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Registration successful"
+        user:
+          $ref: '#/components/schemas/User'
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login successful"
+        user:
+          $ref: '#/components/schemas/User'
+        expires_in:
+          type: string
+          example: "1d"
+
+    Product:
+      type: object
+      properties:
+        product_id:
+          type: integer
+          example: 456
+        name:
+          type: string
+          example: "Dental Scaler Set"
+        description:
+          type: string
+          example: "Professional dental scaling instruments"
+        price:
+          type: number
+          example: 89.99
+        currency:
+          type: string
+          example: "USD"
+        sku:
+          type: string
+          example: "DS-001"
+        category_id:
+          type: integer
+          example: 2
+        category_name:
+          type: string
+          example: "Instruments"
+        stock_quantity:
+          type: integer
+          example: 25
+        low_stock_threshold:
+          type: integer
+          example: 5
+        is_featured:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum: [active, inactive, discontinued]
+          example: "active"
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              image_id:
+                type: integer
+              image_url:
+                type: string
+              is_primary:
+                type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            variants:
+              type: array
+              items:
+                type: object
+                properties:
+                  variant_id:
+                    type: integer
+                  name:
+                    type: string
+                  value:
+                    type: string
+                  price_modifier:
+                    type: number
+            reviews:
+              type: array
+              items:
+                type: object
+                properties:
+                  review_id:
+                    type: integer
+                  user_name:
+                    type: string
+                  rating:
+                    type: integer
+                    minimum: 1
+                    maximum: 5
+                  comment:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+
+    Order:
+      type: object
+      properties:
+        order_id:
+          type: integer
+          example: 789
+        order_number:
+          type: string
+          example: "ORD20240115001"
+        user_id:
+          type: integer
+          example: 123
+        status:
+          type: string
+          enum: [pending, confirmed, processing, shipped, delivered, cancelled]
+          example: "confirmed"
+        payment_status:
+          type: string
+          enum: [pending, paid, failed, refunded]
+          example: "paid"
+        payment_method:
+          type: string
+          enum: [bank_transfer, cash_on_delivery]
+          example: "bank_transfer"
+        subtotal:
+          type: number
+          example: 179.98
+        tax_amount:
+          type: number
+          example: 14.40
+        shipping_cost:
+          type: number
+          example: 10.00
+        total_amount:
+          type: number
+          example: 204.38
+        currency:
+          type: string
+          example: "USD"
+        shipping_address:
+          type: object
+          properties:
+            full_name:
+              type: string
+            phone:
+              type: string
+            address_line_1:
+              type: string
+            address_line_2:
+              type: string
+            city:
+              type: string
+            state:
+              type: string
+            postal_code:
+              type: string
+            country:
+              type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              product_id:
+                type: integer
+              product_name:
+                type: string
+              quantity:
+                type: integer
+              price:
+                type: number
+              total:
+                type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateOrderRequest:
+      type: object
+      required: [items, shipping_address, payment_method]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [product_id, quantity]
+            properties:
+              product_id:
+                type: integer
+                example: 456
+              quantity:
+                type: integer
+                minimum: 1
+                example: 2
+              variant_id:
+                type: integer
+                example: 12
+        shipping_address:
+          type: object
+          required: [full_name, phone, address_line_1, city, country]
+          properties:
+            full_name:
+              type: string
+              example: "Ahmed Hassan"
+            phone:
+              type: string
+              example: "+249123456789"
+            address_line_1:
+              type: string
+              example: "123 Main Street"
+            address_line_2:
+              type: string
+              example: "Apartment 4B"
+            city:
+              type: string
+              example: "Khartoum"
+            state:
+              type: string
+              example: "Khartoum State"
+            postal_code:
+              type: string
+              example: "11111"
+            country:
+              type: string
+              example: "Sudan"
+        payment_method:
+          type: string
+          enum: [bank_transfer, cash_on_delivery]
+          example: "bank_transfer"
+        notes:
+          type: string
+          example: "Please deliver during business hours"
+
+    DashboardData:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            products:
+              type: integer
+              example: 150
+            orders:
+              type: integer
+              example: 45
+            revenue:
+              type: number
+              example: 12500.75
+            payments:
+              type: object
+              properties:
+                total_transactions:
+                  type: integer
+                  example: 42
+                successful_payments:
+                  type: integer
+                  example: 38
+                pending_payments:
+                  type: integer
+                  example: 4
+                total_amount:
+                  type: number
+                  example: 11800.50
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          example: 20
+        offset:
+          type: integer
+          example: 0
+        total:
+          type: integer
+          example: 150
+        has_more:
+          type: boolean
+          example: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid credentials"
+        message:
+          type: string
+          example: "The provided email or password is incorrect"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation failed"
+        message:
+          type: string
+          example: "Invalid input data"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "email"
+              message:
+                type: string
+                example: "Invalid email format"
+              value:
+                type: string
+                example: "invalid-email"

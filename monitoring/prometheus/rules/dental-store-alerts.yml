@@ -1,0 +1,219 @@
+groups:
+- name: dental-store-system
+  rules:
+  # Service Down Alert
+  - alert: ServiceDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: dental-store
+    annotations:
+      summary: "Service {{ $labels.instance }} is down"
+      description: "Service {{ $labels.instance }} has been down for more than 1 minute."
+
+  # High CPU Usage Alert
+  - alert: HighCPUUsage
+    expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "High CPU usage on {{ $labels.instance }}"
+      description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}."
+
+  # High Memory Usage Alert
+  - alert: HighMemoryUsage
+    expr: 100 * (1 - ((node_memory_MemAvailable_bytes or node_memory_Buffers_bytes + node_memory_Cached_bytes + node_memory_MemFree_bytes) / node_memory_MemTotal_bytes)) > 85
+    for: 5m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "High memory usage on {{ $labels.instance }}"
+      description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}."
+
+  # Disk Space Alert
+  - alert: DiskSpaceLow
+    expr: 100 * (1 - node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) > 85
+    for: 5m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "Disk space low on {{ $labels.instance }}"
+      description: "Disk usage is above 85% on {{ $labels.instance }} filesystem {{ $labels.mountpoint }}."
+
+- name: dental-store-application
+  rules:
+  # High HTTP Error Rate
+  - alert: HighHTTPErrorRate
+    expr: rate(http_requests_total{code=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: critical
+      service: dental-store
+    annotations:
+      summary: "High HTTP error rate on {{ $labels.service }}"
+      description: "HTTP error rate is above 10% for more than 5 minutes on {{ $labels.service }}."
+
+  # High Response Time
+  - alert: HighResponseTime
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+    for: 5m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "High response time on {{ $labels.service }}"
+      description: "95th percentile response time is above 2 seconds for more than 5 minutes on {{ $labels.service }}."
+
+  # Database Connection Issues
+  - alert: DatabaseConnectionHigh
+    expr: pg_stat_activity_count > 80
+    for: 2m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "High database connections"
+      description: "PostgreSQL has more than 80 active connections for more than 2 minutes."
+
+  # Redis Connection Issues
+  - alert: RedisDown
+    expr: redis_up == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: dental-store
+    annotations:
+      summary: "Redis is down"
+      description: "Redis instance {{ $labels.instance }} is down for more than 1 minute."
+
+- name: dental-store-business
+  rules:
+  # Low Stock Alert
+  - alert: LowStockProducts
+    expr: dental_store_low_stock_products > 10
+    for: 1m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "Multiple products are low in stock"
+      description: "{{ $value }} products are currently low in stock and need restocking."
+
+  # High Order Volume
+  - alert: HighOrderVolume
+    expr: rate(dental_store_orders_total[5m]) > 100
+    for: 5m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "High order volume detected"
+      description: "Order rate is above 100 orders per minute for more than 5 minutes."
+
+  # Payment Failures
+  - alert: HighPaymentFailureRate
+    expr: rate(dental_store_payment_failures_total[5m]) / rate(dental_store_payments_total[5m]) > 0.05
+    for: 5m
+    labels:
+      severity: critical
+      service: dental-store
+    annotations:
+      summary: "High payment failure rate"
+      description: "Payment failure rate is above 5% for more than 5 minutes."
+
+  # No Orders Alert (Business Impact)
+  - alert: NoOrdersReceived
+    expr: increase(dental_store_orders_total[1h]) == 0
+    for: 1h
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "No orders received in the last hour"
+      description: "No new orders have been received in the last hour, which may indicate a system issue."
+
+- name: dental-store-infrastructure
+  rules:
+  # Container Restart Alert
+  - alert: ContainerRestarting
+    expr: increase(container_start_time_seconds[1h]) > 3
+    for: 0m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "Container {{ $labels.name }} is restarting frequently"
+      description: "Container {{ $labels.name }} has restarted more than 3 times in the last hour."
+
+  # RabbitMQ Queue Size
+  - alert: RabbitMQQueueHigh
+    expr: rabbitmq_queue_messages > 1000
+    for: 5m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "RabbitMQ queue {{ $labels.queue }} has high message count"
+      description: "Queue {{ $labels.queue }} has more than 1000 messages for more than 5 minutes."
+
+  # Elasticsearch Cluster Health
+  - alert: ElasticsearchClusterRed
+    expr: elasticsearch_cluster_health_status{color="red"} == 1
+    for: 1m
+    labels:
+      severity: critical
+      service: dental-store
+    annotations:
+      summary: "Elasticsearch cluster health is RED"
+      description: "Elasticsearch cluster health is RED, indicating serious issues with the cluster."
+
+  # Log Volume Alert
+  - alert: HighLogVolume
+    expr: rate(log_entries_total[5m]) > 1000
+    for: 5m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "High log volume detected"
+      description: "Log entry rate is above 1000 entries per minute for more than 5 minutes."
+
+- name: dental-store-security
+  rules:
+  # Failed Login Attempts
+  - alert: HighFailedLoginAttempts
+    expr: rate(dental_store_failed_logins_total[5m]) > 10
+    for: 2m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "High number of failed login attempts"
+      description: "Failed login rate is above 10 attempts per minute for more than 2 minutes."
+
+  # Suspicious Activity
+  - alert: SuspiciousAPIActivity
+    expr: rate(http_requests_total{code="403"}[5m]) > 50
+    for: 2m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "High number of 403 Forbidden responses"
+      description: "Rate of 403 responses is above 50 per minute for more than 2 minutes, indicating potential security issues."
+
+  # SSL Certificate Expiry
+  - alert: SSLCertificateExpiringSoon
+    expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+    for: 1m
+    labels:
+      severity: warning
+      service: dental-store
+    annotations:
+      summary: "SSL certificate expiring soon"
+      description: "SSL certificate for {{ $labels.instance }} expires in less than 7 days."

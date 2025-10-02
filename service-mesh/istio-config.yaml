@@ -1,0 +1,391 @@
+# Istio Service Mesh Configuration for Dental Store Sudan
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dental-store
+  labels:
+    istio-injection: enabled
+---
+# Virtual Service for API Gateway
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-gateway
+  namespace: dental-store
+spec:
+  hosts:
+  - api.dentalstore.sd
+  - api-gateway.dental-store.svc.cluster.local
+  gateways:
+  - dental-store-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/auth
+    route:
+    - destination:
+        host: auth-service.dental-store.svc.cluster.local
+        port:
+          number: 5000
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+  - match:
+    - uri:
+        prefix: /api/products
+    route:
+    - destination:
+        host: product-service.dental-store.svc.cluster.local
+        port:
+          number: 5001
+    timeout: 15s
+    retries:
+      attempts: 2
+      perTryTimeout: 5s
+  - match:
+    - uri:
+        prefix: /api/orders
+    route:
+    - destination:
+        host: order-service.dental-store.svc.cluster.local
+        port:
+          number: 5002
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+  - match:
+    - uri:
+        prefix: /api/payments
+    route:
+    - destination:
+        host: payment-service.dental-store.svc.cluster.local
+        port:
+          number: 5003
+    timeout: 45s
+    retries:
+      attempts: 2
+      perTryTimeout: 15s
+  - match:
+    - uri:
+        prefix: /api/shipments
+    route:
+    - destination:
+        host: shipment-service.dental-store.svc.cluster.local
+        port:
+          number: 5004
+    timeout: 20s
+  - match:
+    - uri:
+        prefix: /api/notifications
+    route:
+    - destination:
+        host: notification-service.dental-store.svc.cluster.local
+        port:
+          number: 5005
+    timeout: 10s
+  - match:
+    - uri:
+        prefix: /api/reports
+    route:
+    - destination:
+        host: reporting-service.dental-store.svc.cluster.local
+        port:
+          number: 5006
+    timeout: 60s
+  - route:
+    - destination:
+        host: api-gateway.dental-store.svc.cluster.local
+        port:
+          number: 3000
+---
+# Gateway Configuration
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: dental-store-gateway
+  namespace: dental-store
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - api.dentalstore.sd
+    - "*.dentalstore.sd"
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: dentalstore-tls
+    hosts:
+    - api.dentalstore.sd
+    - "*.dentalstore.sd"
+---
+# Destination Rules for Circuit Breaking
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: auth-service
+  namespace: dental-store
+spec:
+  host: auth-service.dental-store.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 10
+        consecutiveGatewayErrors: 5
+        interval: 30s
+        baseEjectionTime: 30s
+    outlierDetection:
+      consecutiveGatewayErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: product-service
+  namespace: dental-store
+spec:
+  host: product-service.dental-store.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 200
+      http:
+        http1MaxPendingRequests: 100
+        maxRequestsPerConnection: 20
+    outlierDetection:
+      consecutiveGatewayErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 30
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: order-service
+  namespace: dental-store
+spec:
+  host: order-service.dental-store.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 150
+      http:
+        http1MaxPendingRequests: 75
+        maxRequestsPerConnection: 15
+    outlierDetection:
+      consecutiveGatewayErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+---
+# Security Policies
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: dental-store
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: auth-service-policy
+  namespace: dental-store
+spec:
+  selector:
+    matchLabels:
+      app: auth-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/dental-store/sa/api-gateway"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/api/auth/*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: admin-only-policy
+  namespace: dental-store
+spec:
+  selector:
+    matchLabels:
+      app: reporting-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/dental-store/sa/api-gateway"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/api/reports/*"]
+    when:
+    - key: request.headers[x-user-role]
+      values: ["admin", "manager"]
+---
+# Telemetry Configuration
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: default-metrics
+  namespace: dental-store
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+  - overrides:
+    - match:
+        metric: ALL_METRICS
+      tagOverrides:
+        request_protocol:
+          value: "http"
+        response_code:
+          value: "%{RESPONSE_CODE}"
+        source_app:
+          value: "%{SOURCE_APP}"
+        destination_service_name:
+          value: "%{DESTINATION_SERVICE_NAME}"
+---
+# Traffic Management - Canary Deployment Example
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: product-service-canary
+  namespace: dental-store
+spec:
+  hosts:
+  - product-service.dental-store.svc.cluster.local
+  http:
+  - match:
+    - headers:
+        x-canary-user:
+          exact: "true"
+    route:
+    - destination:
+        host: product-service.dental-store.svc.cluster.local
+        subset: v2
+      weight: 100
+  - route:
+    - destination:
+        host: product-service.dental-store.svc.cluster.local
+        subset: v1
+      weight: 90
+    - destination:
+        host: product-service.dental-store.svc.cluster.local
+        subset: v2
+      weight: 10
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: product-service-versions
+  namespace: dental-store
+spec:
+  host: product-service.dental-store.svc.cluster.local
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
+# Rate Limiting
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: rate-limit-filter
+  namespace: dental-store
+spec:
+  workloadSelector:
+    labels:
+      app: api-gateway
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.local_ratelimit
+        typed_config:
+          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          value:
+            stat_prefix: rate_limiter
+            token_bucket:
+              max_tokens: 100
+              tokens_per_fill: 100
+              fill_interval: 60s
+            filter_enabled:
+              runtime_key: rate_limit_enabled
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            filter_enforced:
+              runtime_key: rate_limit_enforced
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+---
+# Fault Injection for Testing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: payment-service-fault
+  namespace: dental-store
+spec:
+  hosts:
+  - payment-service.dental-store.svc.cluster.local
+  http:
+  - match:
+    - headers:
+        x-test-fault:
+          exact: "delay"
+    fault:
+      delay:
+        percentage:
+          value: 10
+        fixedDelay: 5s
+    route:
+    - destination:
+        host: payment-service.dental-store.svc.cluster.local
+  - match:
+    - headers:
+        x-test-fault:
+          exact: "abort"
+    fault:
+      abort:
+        percentage:
+          value: 5
+        httpStatus: 503
+    route:
+    - destination:
+        host: payment-service.dental-store.svc.cluster.local
+  - route:
+    - destination:
+        host: payment-service.dental-store.svc.cluster.local

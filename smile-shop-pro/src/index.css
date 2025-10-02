@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Khalid Dqash Brand Colors */
+    --background: 0 0% 98%;
+    --foreground: 220 40% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 15%;
+
+    /* Primary: Turquoise from logo */
+    --primary: 190 80% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 190 80% 65%;
+
+    /* Secondary: Navy Blue from logo */
+    --secondary: 220 60% 30%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 190 80% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 190 80% 45%;
+
+    --radius: 0.75rem;
+
+    /* Custom dental theme colors */
+    --dental-blue: 220 60% 30%;
+    --dental-cyan: 190 80% 45%;
+    --dental-light: 190 80% 95%;
+    
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--dental-cyan)), hsl(var(--dental-blue)));
+    --gradient-card: linear-gradient(180deg, hsl(var(--background)), hsl(var(--dental-light)));
+    
+    /* Shadows */
+    --shadow-dental: 0 10px 40px -10px hsl(var(--dental-cyan) / 0.3);
+    --shadow-card: 0 4px 20px -4px hsl(220 40% 15% / 0.1);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 220 60% 30%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 190 80% 45%;
+  }
+
+  .dark {
+    --background: 220 40% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 220 40% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 220 40% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 190 80% 55%;
+    --primary-foreground: 220 40% 10%;
+    --primary-light: 190 80% 75%;
+
+    --secondary: 220 60% 40%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 190 80% 55%;
+    --accent-foreground: 220 40% 10%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 190 80% 55%;
+
+    --dental-blue: 220 60% 40%;
+    --dental-cyan: 190 80% 55%;
+    --dental-light: 190 80% 20%;
+    
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 190 80% 55%;
+    --sidebar-primary-foreground: 220 40% 10%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 190 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
