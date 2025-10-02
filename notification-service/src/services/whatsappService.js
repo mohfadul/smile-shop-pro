@@ -285,7 +285,7 @@ Thank you for choosing Dental Store Sudan! 🦷🇸🇩`
       },
       
       appointment_reminder: {
-        body: `Hello {{patient_name}}! 📅
+        body: `Hello {{customer_name}}! 📅
 
 *Appointment Reminder*
 

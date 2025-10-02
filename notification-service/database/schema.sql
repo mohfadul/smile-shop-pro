@@ -148,8 +148,8 @@ INSERT INTO notification_templates (name, channel, subject_template, body_templa
  '["product_name", "sku", "current_stock", "min_threshold"]'),
 
 ('appointment_reminder_whatsapp', 'whatsapp', null,
- 'Hello {{patient_name}}! 📅\n\nReminder: You have a dental appointment tomorrow at {{appointment_time}}.\n\nLocation: {{clinic_address}}\nDoctor: {{doctor_name}}\n\nPlease arrive 15 minutes early. Call {{clinic_phone}} if you need to reschedule.\n\nSee you soon! 🦷',
- '["patient_name", "appointment_time", "clinic_address", "doctor_name", "clinic_phone"]')
+'Hello {{customer_name}}! 📅\n\nReminder: You have a dental appointment tomorrow at {{appointment_time}}.\n\nLocation: {{clinic_address}}\nDoctor: {{doctor_name}}\n\nPlease arrive 15 minutes early. Call {{clinic_phone}} if you need to reschedule.\n\nSee you soon! 🦷',
+'["customer_name", "appointment_time", "clinic_address", "doctor_name", "clinic_phone"]')
 
 ON CONFLICT (name) DO NOTHING;
 

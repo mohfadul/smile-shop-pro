@@ -260,7 +260,7 @@ INSERT INTO categories (name, description, sort_order) VALUES
 INSERT INTO products (name, description, sku, price, category_id, brand, stock_quantity, status, is_featured) VALUES
     (
         'Professional Dental Chair Deluxe',
-        'High-quality dental treatment chair with LED lighting, adjustable positioning, and ergonomic design for maximum patient comfort.',
+        'High-quality dental treatment chair with LED lighting, adjustable positioning, and ergonomic design for maximum customer comfort.',
         'DC-DELUXE-001',
         3499.99,
         (SELECT category_id FROM categories WHERE name = 'Dental Equipment'),
