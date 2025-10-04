@@ -1,14 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Package, ShoppingBag, Users } from "lucide-react";
-import ServiceStatus from "@/components/ServiceStatus";
-import { useDashboardStats } from "@/hooks/useApi";
 
 const Dashboard = () => {
-  // Fetch real dashboard stats from backend
-  const { data: dashboardData, isLoading: statsLoading, error: statsError } = useDashboardStats();
-
-  // Use backend data or fallback to static data
-  const stats = dashboardData?.stats || [
+  const stats = [
     {
       title: "Total Revenue",
       value: "$45,231.89",
@@ -44,11 +38,6 @@ const Dashboard = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
-      </div>
-
-      {/* Service Status */}
-      <div className="mb-6">
-        <ServiceStatus />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">

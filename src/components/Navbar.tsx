@@ -1,17 +1,29 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, User, Search, Package, LogOut } from "lucide-react";
+import { ShoppingCart, User, Search, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useAuth, useCart } from "@/hooks/useApi";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import logo from "@/assets/logo-full.jpg";
+import { useAuth } from "@/hooks/use-auth";
 
 const Navbar = () => {
-  const { isAuthenticated, profile, logout } = useAuth();
-  const { data: cartData } = useCart();
-  
-  const cartItemsCount = cartData?.cart?.items?.reduce((total: number, item: any) => total + item.quantity, 0) || 0;
+  const { user, isAuthenticated, signOut, isLoading } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -46,71 +58,56 @@ const Navbar = () => {
           </div>
           
           {/* Shopping Cart */}
-          <Button variant="ghost" size="icon" asChild className="relative">
-            <Link to="/cart">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/">
               <ShoppingCart className="h-5 w-5" />
-              {cartItemsCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                >
-                  {cartItemsCount > 99 ? '99+' : cartItemsCount}
-                </Badge>
-              )}
-              <span className="sr-only">Shopping Cart ({cartItemsCount})</span>
+              <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs">
+                0
+              </Badge>
+              <span className="sr-only">Shopping Cart</span>
             </Link>
           </Button>
 
-          {/* User Account */}
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="relative">
                   <User className="h-5 w-5" />
-                  <span className="sr-only">Account Menu</span>
+                  <span className="sr-only">User menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{profile?.name || 'User'}</p>
-                  <p className="text-xs text-muted-foreground">{profile?.email}</p>
-                </div>
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{user?.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user?.user_metadata?.full_name || 'User'}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/orders" className="cursor-pointer">
-                    <Package className="mr-2 h-4 w-4" />
-                    My Orders
+                  <Link to="/admin" className="flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Admin
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    Profile Settings
-                  </Link>
-                </DropdownMenuItem>
-                {profile?.role === 'admin' && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="cursor-pointer">
-                        <Package className="mr-2 h-4 w-4" />
-                        Admin Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive">
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  disabled={isLoading}
+                  className="flex items-center text-destructive focus:text-destructive"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+                  {isLoading ? 'Signing out...' : 'Sign out'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button variant="ghost" size="icon" asChild>
-              <Link to="/login">
+              <Link to="/auth">
                 <User className="h-5 w-5" />
-                <span className="sr-only">Sign In</span>
+                <span className="sr-only">Account</span>
               </Link>
             </Button>
           )}

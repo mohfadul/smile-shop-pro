@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, SlidersHorizontal, Loader2, AlertCircle } from "lucide-react";
-import { useProducts, useCategories } from "@/hooks/useApi";
+import { useProducts, useCategories } from "@/hooks/use-products";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Fallback data for development
@@ -60,28 +60,24 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   // Fetch products and categories from backend
-  const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({
-    search: searchQuery,
-    category: selectedCategory !== "all" ? selectedCategory : undefined,
-  });
-
+  const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts();
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
 
   // Use backend data or fallback to static data
-  const products = productsData?.products || fallbackProducts;
-  const categories = categoriesData?.categories || [
-    { id: "equipment", name: "Equipment" },
-    { id: "imaging", name: "Imaging" },
-    { id: "instruments", name: "Instruments" },
-    { id: "sterilization", name: "Sterilization" },
+  const products = productsData || fallbackProducts;
+  const categories = categoriesData || [
+    { category_id: "equipment", name: "Equipment" },
+    { category_id: "imaging", name: "Imaging" },
+    { category_id: "instruments", name: "Instruments" },
+    { category_id: "sterilization", name: "Sterilization" },
   ];
 
-  // Filter products locally if backend filtering isn't available
+  // Filter products locally
   const filteredProducts = useMemo(() => {
     return products.filter((product: any) => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === "all" || 
-        product.category.toLowerCase() === selectedCategory.toLowerCase();
+        product.category_id?.toLowerCase() === selectedCategory.toLowerCase();
       return matchesSearch && matchesCategory;
     });
   }, [products, searchQuery, selectedCategory]);
@@ -135,7 +131,7 @@ const Products = () => {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category: any) => (
-                  <SelectItem key={category.id} value={category.id}>
+                  <SelectItem key={category.category_id} value={category.category_id}>
                     {category.name}
                   </SelectItem>
                 ))}
@@ -160,7 +156,14 @@ const Products = () => {
           {!productsLoading && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map((product: any) => (
-                <ProductCard key={product.id} {...product} />
+                <ProductCard 
+                  key={product.product_id} 
+                  id={product.product_id}
+                  name={product.name}
+                  price={product.price}
+                  image={product.images?.[0] || "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=500"}
+                  category={product.categories?.name || "General"}
+                />
               ))}
             </div>
           )}
